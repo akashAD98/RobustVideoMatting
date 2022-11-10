@@ -37,6 +37,44 @@ All footage in the video are available in [Google Drive](https://drive.google.co
 
 <br>
 
+
+### installation steps
+
+```!git clone https://github.com/PeterL1n/RobustVideoMatting.git```
+
+```cd /content/RobustVideoMatting```
+
+download sample video
+``` !gdown https://drive.google.com/uc?id=1I0v72-hNlK1hm9q1OwyaATUYApXpotS6 -O input.mp4```
+
+```!pip install --quiet av pims```
+
+```
+import torch
+
+model = torch.hub.load("PeterL1n/RobustVideoMatting", "mobilenetv3").cuda() # or "resnet50"
+convert_video = torch.hub.load("PeterL1n/RobustVideoMatting", "converter")
+```
+```
+from inference import convert_video
+!python inference.py \
+    --variant "mobilenetv3" \
+    --checkpoint "/content/rvm_mobilenetv3.pth" \
+    --device "cuda" \
+    --input-source "/content/RobustVideoMatting/input.mp4" \
+    --output-type "video" \
+    --output-background "image" \
+    --output-composition "/content/videoop/withbackgroung_op.mp4" \
+    --output-alpha "/content/videoop/alpha.mp4" \
+    --output-foreground "/content/videoop/foreground.mp4" \
+    --output-video-mbps 4 \
+    --seq-chunk 1 \
+    --num-workers 1
+
+```
+
+
+
 ## Download
 
 We recommend MobileNetv3 models for most use cases. ResNet50 models are the larger variant with small performance improvements. Our model is available on various inference frameworks. See [inference documentation](documentation/inference.md) for more instructions.
