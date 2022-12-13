@@ -71,10 +71,11 @@ def convert_video(model,
         transform = transforms.ToTensor()
 
     # Initialize reader
+    #input_source_resized = cv2.Resize(input_source,(352,288))
     if os.path.isfile(input_source):
         source = VideoReader(input_source, transform)
     else:
-        source = ImageSequenceReader(input_source, transform)
+        source = ImageSequenceReader(input_source_resized, transform)
     reader = DataLoader(source, batch_size=seq_chunk, pin_memory=True, num_workers=num_workers)
     
     # Initialize writers
@@ -114,7 +115,7 @@ def convert_video(model,
 
     if (output_composition is not None) and (output_type == 'video'):
         # bgr = torch.tensor([120, 255, 155], device=device, dtype=dtype).div(255).view(1, 1, 3, 1, 1)
-        bgr_source = VideoReader("./asianboss.mp4", transform).to(device)
+        bgr_source = VideoReader("/content/output_priyanka_ffmpeg_720_576_24fps_10sec.mp4", transform)
         bgr_reader = DataLoader(bgr_source, batch_size=seq_chunk, pin_memory=True, num_workers=num_workers)
     try:
         with torch.no_grad():
@@ -126,6 +127,7 @@ def convert_video(model,
                     downsample_ratio = auto_downsample_ratio(*src.shape[2:])
 
                 src = src.to(device, dtype, non_blocking=True).unsqueeze(0) # [B, T, C, H, W]
+                bgr=bgr.to(device)
                 fgr, pha, *rec = model(src, *rec, downsample_ratio)
 
                 if output_foreground is not None:
@@ -205,5 +207,3 @@ if __name__ == '__main__':
         num_workers=args.num_workers,
         progress=not args.disable_progress
     )
-    
-    
