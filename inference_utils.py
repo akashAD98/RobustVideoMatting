@@ -12,14 +12,14 @@ class VideoReader(Dataset):
         self.video = pims.PyAVVideoReader(path)
         self.rate = self.video.frame_rate
         self.transform = transform
-        
+
     @property
     def frame_rate(self):
         return self.rate
-        
+
     def __len__(self):
         return len(self.video)
-        
+
     def __getitem__(self, idx):
         frame = self.video[idx]
         frame = Image.fromarray(np.asarray(frame))
@@ -40,7 +40,7 @@ class VideoWriter:
         self.stream.width = frames.size(3)
         self.stream.height = frames.size(2)
         if frames.size(1) == 1:
-            frames = frames.repeat(1, 3, 1, 1)  # convert grayscale to RGB
+            frames = frames.repeat(1, 3, 1, 1) # convert grayscale to RGB
         frames = frames.mul(255).byte().cpu().permute(0, 2, 3, 1).numpy()
         for t in range(frames.shape[0]):
             frame = frames[t]
@@ -52,9 +52,48 @@ class VideoWriter:
         self.container.close()
 
 
+class ImageSequenceReader(Dataset):
+    def __init__(self, path, transform=None):
+        self.path = path
+        self.files = sorted(os.listdir(path))
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.files)
+
+    def __getitem__(self, idx):
+        with Image.open(os.path.join(self.path, self.files[idx])) as img:
+            img.load()
+        if self.transform is not None:
+            return self.transform(img)
+        return img
+
+
+class ImageSequenceWriter:
+    def __init__(self, path, extension='jpg'):
+        self.path = path
+        self.extension = extension
+        self.counter = 0
+        os.makedirs(path, exist_ok=True)
+
+    def write(self, frames):
+        # frames: [T, C, H, W]
+        for t in range(frames.shape[0]):
+            to_pil_image(frames[t]).save(os.path.join(
+                self.path, str(self.counter).zfill(4) + '.' + self.extension))
+            self.counter += 1
+
+    def close(self):
+        pass
+
+
 class AudioVideoWriter(VideoWriter):
     def __init__(self, path, frame_rate, audio_stream=None, bit_rate=1000000):
-        super(AudioVideoWriter, self).__init__(path=path, frame_rate=frame_rate, bit_rate=bit_rate)
+        super(AudioVideoWriter, self).__init__(
+            path=path,
+            frame_rate=frame_rate,
+            bit_rate=bit_rate
+        )
         self.source_audio_stream = audio_stream
         self.output_audio_stream = self.container.add_stream(
             codec_name=self.source_audio_stream.codec_context.codec.name,
@@ -73,58 +112,3 @@ class AudioVideoWriter(VideoWriter):
         self.remux_audio()
         self.container.mux(self.output_audio_stream.encode())
         super(AudioVideoWriter, self).close()
-
-
-class ImageSequenceReader(Dataset):
-    def __init__(self, path, transform=None):
-        self.path = path
-        self.files = sorted(os.listdir(path))
-        self.transform = transform
-        
-    def __len__(self):
-        return len(self.files)
-    
-    def __getitem__(self, idx):
-        with Image.open(os.path.join(self.path, self.files[idx])) as img:
-            img.load()
-        if self.transform is not None:
-            return self.transform(img)
-        return img
- 
-
-class SequentialSampler(Dataset):
-    r"""Samples elements sequentially, always in the same order.
-
-    Args:
-        data_source (Dataset): dataset to sample from
-    """
-    data_source: Sized
-
-    def __init__(self, data_source: Sized) -> None:
-        self.data_source = data_source
-
-    def __iter__(self) -> Iterator[int]:
-        return iter(range(len(self.data_source)))
-
-    def __len__(self) -> int:
-        return len(self.data_source)
-    
-    
-   
-
-class ImageSequenceWriter:
-    def __init__(self, path, extension='jpg'):
-        self.path = path
-        self.extension = extension
-        self.counter = 0
-        os.makedirs(path, exist_ok=True)
-    
-    def write(self, frames):
-        # frames: [T, C, H, W]
-        for t in range(frames.shape[0]):
-            to_pil_image(frames[t]).save(os.path.join(
-                self.path, str(self.counter).zfill(4) + '.' + self.extension))
-            self.counter += 1
-            
-    def close(self):
-        pass
