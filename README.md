@@ -59,14 +59,11 @@ convert_video = torch.hub.load("PeterL1n/RobustVideoMatting", "converter")
 from inference import convert_video
 !python inference.py \
     --variant "mobilenetv3" \
-    --checkpoint "/content/rvm_mobilenetv3.pth" \
+    --checkpoint "/content/drive/MyDrive/RobustVideoMatting/CHECKPOINT/rvm_mobilenetv3.pth" \
     --device "cuda" \
-    --input-source "/content/RobustVideoMatting/input.mp4" \
+    --input-source "/content/drive/MyDrive/RobustVideoMatting/videos/model_video/tesla.mp4" \
     --output-type "video" \
-    --output-background "image" \
-    --output-composition "/content/videoop/withbackgroung_op.mp4" \
-    --output-alpha "/content/videoop/alpha.mp4" \
-    --output-foreground "/content/videoop/foreground.mp4" \
+    --output-composition "/content/drive/MyDrive/RobustVideoMatting/Outputvid/Outpteslamusicop.mp4" \
     --output-video-mbps 4 \
     --seq-chunk 1 \
     --num-workers 1
