@@ -28,6 +28,7 @@ from inference_utils import VideoReader, VideoWriter, ImageSequenceReader, Image
 
 def convert_video(model,
                   input_source: str,
+                  input_video_background:str,
                   input_resize: Optional[Tuple[int, int]] = None,
                   downsample_ratio: Optional[float] = None,
                   output_type: str = 'video',
@@ -165,7 +166,7 @@ def convert_video(model,
 
     if (output_composition is not None) and (output_type == 'video'):
         # bgr = torch.tensor([120, 255, 155], device=device, dtype=dtype).div(255).view(1, 1, 3, 1, 1)
-        bgr_source = VideoReader("/content/drive/MyDrive/RobustVideoMatting/videos/Background/Merry Xmas.mp4", transform)
+        bgr_source = VideoReader(input_video_background, transform)
         bgr_reader = DataLoader(bgr_source, batch_size=seq_chunk, pin_memory=True, num_workers=num_workers)
     try:
         with torch.no_grad():
@@ -231,6 +232,7 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint', type=str, required=True)
     parser.add_argument('--device', type=str, required=True)
     parser.add_argument('--input-source', type=str, required=True)
+    parser.add_argument('--input_video_background', type=str, required=True)   
     parser.add_argument('--input-resize', type=int, default=None, nargs=2)
     parser.add_argument('--downsample-ratio', type=float)
     parser.add_argument('--output-composition', type=str)
@@ -246,6 +248,7 @@ if __name__ == '__main__':
     converter = Converter(args.variant, args.checkpoint, args.device)
     converter.convert(
         input_source=args.input_source,
+        input_video_background=args.input_video_background,
         input_resize=args.input_resize,
         downsample_ratio=args.downsample_ratio,
         output_type=args.output_type,
